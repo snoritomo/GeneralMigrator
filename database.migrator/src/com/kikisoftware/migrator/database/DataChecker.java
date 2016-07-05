@@ -15,13 +15,17 @@ import org.apache.log4j.Level;
  * @author kikisoftware
  */
 public abstract class DataChecker extends Utilities implements Runnable {
-	/** コンフィグファイルfile.bufferの値を取得する。コンフィグの指定は必須 **/
+	/** コンフィグファイルfile.bufferの値を取得する。コンフィグの指定は必須
+	@return 設定されたバッファバイト数 **/
 	public static int getFileBuffer() {return Integer.parseInt(getResourceString("file.buffer", "", Level.FATAL));}
-	/** コンフィグファイルfile.encodeの値を取得する。コンフィグの指定は必須 **/
+	/** コンフィグファイルfile.encodeの値を取得する。コンフィグの指定は必須
+	@return 設定された文字コード **/
 	public static String getFileEncode() {return getResourceString("file.encode", "", Level.FATAL);}
-	/** コンフィグファイルcheck.selectSourceChunkSizeの値を取得する。コンフィグの指定は必須 **/
+	/** コンフィグファイルcheck.selectSourceChunkSizeの値を取得する。コンフィグの指定は必須
+	@return 設定された移行元の読み込みチャンク数 **/
 	public static int getCheckSelectSourceChunkSize() {return Integer.parseInt(getResourceString("check.selectSourceChunkSize", "", Level.FATAL));}
-	/** コンフィグファイルcheck.selectDestinationChunkSizeの値を取得する。コンフィグの指定は必須 **/
+	/** コンフィグファイルcheck.selectDestinationChunkSizeの値を取得する。コンフィグの指定は必須
+	@return 設定された移行先の読み込みチャンク数 **/
 	public static int getCheckSelectDestinationChunkSize() {return Integer.parseInt(getResourceString("check.selectDestinationChunkSize", "", Level.FATAL));}
 
 	/** 処理数取得SQLを指定した場合は処理数文字列が入る **/
@@ -88,12 +92,14 @@ public abstract class DataChecker extends Utilities implements Runnable {
 	/**
 	 * ログ出力用。元データの特定が可能な値を出力するように実装する
 	 * prepareSelect()を呼び出された後に利用可能になる想定
+	 * @return 移行元データに一意な文字列
 	 */
 	protected abstract String getIdentifierSource();
 	
 	/**
 	 * ログ出力用。移行先データの特定が可能な値を出力するように実装する
 	 * checkDatas()を呼び出された後に利用可能になる想定
+	 * @return 移行先データに一意な文字列
 	 */
 	protected abstract String getIdentifierDestination();
 

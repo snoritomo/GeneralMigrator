@@ -111,7 +111,7 @@ public abstract class Utilities extends Consts {
 
 	/**
 	 * スタックトレース情報をログ出力用改行区切り文字列として取り出す
-	 * @param t throwされた実体 (NotNull)
+	 * @param e throwされた実体 (NotNull)
 	 * @return 取り出されたStackTrace文字列
 	 */
 	public static String getStackTrace(Exception e) {

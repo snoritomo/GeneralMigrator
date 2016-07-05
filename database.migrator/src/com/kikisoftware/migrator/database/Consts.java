@@ -59,4 +59,19 @@ public abstract class Consts {
 	public static final int MILLISEC_ONE_HOUR = MILLISEC_ONE_MINUTE * 60;
 	/** １日分のミリ秒数 **/
 	public static final int MILLISEC_ONE_DAY = MILLISEC_ONE_HOUR * 24;
+	
+	/** SQLステータス　デッドロック **/
+	public static final String SQL_STATE_DEAD_LOCK = "41000";
+	/** SQLステータス　通信エラー **/
+	public static final String SQL_STATE_CONNECTION_ERROR = "08S01";
+	
+	/**
+	 * トランザクション処理の方法を定義
+	 * @author kikisoftware
+	 */
+	public static enum TRANSACTION_MODE {
+		None,
+		ByRecord,
+		All;
+	}
 }
