@@ -52,13 +52,40 @@ public abstract class Migrator extends Utilities implements Runnable {
 	}
 	
 	/**
+	 * トランザクション処理の挙動を変更したい時に呼び出す。
+	 * コンストラクタで一度だけ呼び出す事。
+	 * また、ByRecordではバッチサイズは1に変更され、その他の場合はバッチサイズが設定値に戻される。
+	 * @param mode トランザクション処理の挙動
+	 */
+	protected void setTransactionMode(TRANSACTION_MODE mode){
+		__transactionMode = mode;
+		if(mode == TRANSACTION_MODE.ByRecord){
+			batchSize = 1;
+		}
+		else{
+			batchSize = getExecBatchChunkSize();
+		}
+	}
+	
+	/**
+	 * トランザクション処理の挙動を変更したい時に呼び出す。
+	 * コンストラクタで一度だけ呼び出す事。
+	 * また、ByRecordではバッチサイズは1に変更され、その他の場合はバッチサイズが設定値に戻される。
+	 * @throws java.lang.IllegalArgumentException - TRANSACTION_MODEに、指定した名前の定数がない場合
+	 * @throws java.lang.NullPointerException - 引数がnullの場合
+	 * @param mode トランザクション処理の挙動を表す文字列 (NotNull)
+	 */
+	protected void setTransactionMode(String mode){
+		setTransactionMode(TRANSACTION_MODE.valueOf(mode));
+	}
+	
+	/**
 	 * １処理ごとにトランザクションを使用したい時に呼び出す。
 	 * コンストラクタで一度だけ呼び出す事。
 	 * また、強制的にバッチサイズは1に変更される。
 	 */
 	protected void setTransactionModeByRecord(){
-		__transactionMode = TRANSACTION_MODE.ByRecord;
-		batchSize = 1;
+		setTransactionMode(TRANSACTION_MODE.ByRecord);
 	}
 	
 	/**
@@ -67,8 +94,7 @@ public abstract class Migrator extends Utilities implements Runnable {
 	 * バッチサイズは設定値に戻される。
 	 */
 	protected void setTransactionModeAll(){
-		__transactionMode = TRANSACTION_MODE.All;
-		batchSize = getExecBatchChunkSize();
+		setTransactionMode(TRANSACTION_MODE.All);
 	}
 
 	/**
@@ -77,8 +103,7 @@ public abstract class Migrator extends Utilities implements Runnable {
 	 * バッチサイズは設定値に戻される。
 	 */
 	protected void setTransactionModeNone(){
-		__transactionMode = TRANSACTION_MODE.None;
-		batchSize = getExecBatchChunkSize();
+		setTransactionMode(TRANSACTION_MODE.None);
 	}
 	
 	/**
