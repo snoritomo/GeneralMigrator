@@ -1,5 +1,6 @@
 package com.kikisoftware.migrator.database;
 
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Files;
@@ -203,5 +204,13 @@ public abstract class Utilities extends Consts {
 			setting.put(key, def);
 		}
 		return wk;
+	}
+	
+	/**
+	 * jarファイルのあるディレクトリの絶対パスを取得する
+	 * @return jarファイルのあるディレクトリの絶対パス
+	 */
+	public static String getJarDir(){
+		return Paths.get(new File(System.getProperty("java.class.path").replaceAll(";.*$", "")).getAbsolutePath()).normalize().toString();
 	}
 }

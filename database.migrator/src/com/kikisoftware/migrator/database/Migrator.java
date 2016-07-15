@@ -44,6 +44,20 @@ public abstract class Migrator extends Utilities implements Runnable {
 	private TRANSACTION_MODE __transactionMode = TRANSACTION_MODE.None;
 	
 	/**
+	 * コンストラクタ。
+	 * ライブラリの読み込みを行うため、継承先は必ず呼び出す事
+	 * @throws Exception ライブラリが読み込めなかった時にthrowされる
+	 */
+	public Migrator() throws Exception{
+		try {
+			Class.forName ("com.mysql.jdbc.Driver");
+		} catch (Exception e) {
+			outLog(log_, Level.FATAL, e.getMessage() + RET + getStackTrace(e));
+			throw e;
+		}
+	}
+	
+	/**
 	 * 今回のループではinsert処理をスキップしたい場合に呼び出す。
 	 * 次のループでは自動的に戻っている。
 	 */
@@ -112,8 +126,9 @@ public abstract class Migrator extends Utilities implements Runnable {
 	 * なければ空実装でよい。
 	 * @param rs 今回のループで取得したデータ (NotNull)
 	 * @param con 移行先のコネクション (NotNull)
+	 * @throws SQLException DBエラーや更新障害時にthrowされる。発生後は行ロールバック後、次の処理へ
 	 */
-	protected abstract void doOtherProcess(ResultSet rs, Connection con);
+	protected abstract void doOtherProcess(ResultSet rs, Connection con) throws SQLException;
 	
 	/**
 	 * 処理数取得SQLを返すように実装すると、処理数がロギングされる。
@@ -174,23 +189,26 @@ public abstract class Migrator extends Utilities implements Runnable {
 	 * @throws SQLException DBエラー
 	 */
 	protected void doInsert(ResultSet rs, PreparedStatement ps) throws SQLException{
-		doOtherProcess(rs, getInsertTargetConnection());
-		if(batchSize>1){
-			if(!__skipInsert)ps.addBatch();
-			ps.clearParameters();
-			outLog(log_, Level.INFO, "  process:"+(procNum)+(cnt==null ? "" : " / "+maxcnt)+countLogAddComment+" inserting reserved "+getIdentifier());
-			if(procNum % batchSize==0 || procNum>=maxcnt){
-				ps.executeBatch();
-				ps.clearBatch();
-				outLog(log_, Level.INFO, "batch executed process:"+(procNum)+(cnt==null ? "" : " / "+maxcnt));
+		try{
+			doOtherProcess(rs, getInsertTargetConnection());
+			if(batchSize>1){
+				if(!__skipInsert)ps.addBatch();
+				ps.clearParameters();
+				outLog(log_, Level.INFO, "  process:"+(procNum)+(cnt==null ? "" : " / "+maxcnt)+countLogAddComment+" inserting reserved "+getIdentifier());
+				if(procNum % batchSize==0 || procNum>=maxcnt){
+					ps.executeBatch();
+					ps.clearBatch();
+					outLog(log_, Level.INFO, "batch executed process:"+(procNum)+(cnt==null ? "" : " / "+maxcnt));
+				}
 			}
+			else{
+				if(!__skipInsert)ps.executeUpdate();
+				outLog(log_, Level.INFO, "process:"+(procNum)+countLogAddComment+(cnt==null ? "" : " / "+maxcnt)+ " inserted "+getIdentifier());
+			}
+		}finally{
+			__skipInsert = false;
+			countLogAddComment = "";
 		}
-		else{
-			if(!__skipInsert)ps.executeUpdate();
-			outLog(log_, Level.INFO, "process:"+(procNum)+countLogAddComment+(cnt==null ? "" : " / "+maxcnt)+ " inserted "+getIdentifier());
-		}
-		__skipInsert = false;
-		countLogAddComment = "";
 	}
 	
 	/**
@@ -201,13 +219,6 @@ public abstract class Migrator extends Utilities implements Runnable {
 	public void run() {
 		// ログ出力
 		outLog(log_, Level.INFO, "************ 処理開始 *************");
-
-		try {
-			Class.forName ("com.mysql.jdbc.Driver");
-		} catch (Exception e) {
-			outLog(log_, Level.FATAL, e.getMessage() + RET + getStackTrace(e));
-			return;
-		}
 
 		// データベースの指定
 		Connection con = null;
@@ -297,7 +308,9 @@ public abstract class Migrator extends Utilities implements Runnable {
 				con_insert_to = getInsertTargetConnection();
 				// ログ出力
 				outLog(log_, Level.INFO, "登録先データベース接続完了");
-				
+
+				// ログ出力 トランザクションモード
+				outLog(log_, Level.INFO, "トランザクションモード：" + __transactionMode.toString());
 				// Mode Noneならオートコミット
 				con_insert_to.setAutoCommit(__transactionMode == TRANSACTION_MODE.None);
 				
@@ -332,6 +345,7 @@ public abstract class Migrator extends Utilities implements Runnable {
 						} finally {
 							// コミット・ロールバック処理。失敗するようなら次の処理もどうせ失敗なので、外側のエラー処理に任せる
 							if(sqlDone){
+								outLog(log_, Level.DEBUG, "commit");
 								// Mode ByRecordならコミット。AllならSavePointをリリース
 								if(__transactionMode == TRANSACTION_MODE.ByRecord)
 									con_insert_to.commit();
@@ -339,6 +353,7 @@ public abstract class Migrator extends Utilities implements Runnable {
 									con_insert_to.releaseSavepoint(savepoint);
 							}
 							else{
+								outLog(log_, Level.DEBUG, "rollback");
 								// Mode ByRecordならロールバック、AllならSavePointへ
 								if(__transactionMode == TRANSACTION_MODE.ByRecord)
 									con_insert_to.rollback();

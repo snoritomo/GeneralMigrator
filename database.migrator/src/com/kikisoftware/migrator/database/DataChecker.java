@@ -38,6 +38,20 @@ public abstract class DataChecker extends Utilities implements Runnable {
 	protected String countLogAddComment = "";
 
 	/**
+	 * コンストラクタ。
+	 * ライブラリの読み込みを行うため、継承先は必ず呼び出す事
+	 * @throws Exception ライブラリが読み込めなかった時にthrowされる
+	 */
+	public DataChecker() throws Exception{
+		try {
+			Class.forName ("com.mysql.jdbc.Driver");
+		} catch (Exception e) {
+			outLog(log_, Level.FATAL, e.getMessage() + RET + getStackTrace(e));
+			throw e;
+		}
+	}
+	
+	/**
 	 * 処理数取得SQLを返すように実装すると、処理数がロギングされる。
 	 * @return 処理数取得SQL (NullAllowed)
 	 */
@@ -123,13 +137,6 @@ public abstract class DataChecker extends Utilities implements Runnable {
 	public void run() {
 		// ログ出力
 		outLog(log_, Level.INFO, "************ チェック開始 *************");
-
-		try {
-			Class.forName ("com.mysql.jdbc.Driver");
-		} catch (Exception e) {
-			outLog(log_, Level.FATAL, e.getMessage() + RET + getStackTrace(e));
-			return;
-		}
 
 		// データベースの指定
 		Connection scon = null;
