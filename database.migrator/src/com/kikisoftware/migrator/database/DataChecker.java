@@ -27,6 +27,9 @@ public abstract class DataChecker extends Utilities implements Runnable {
 	/** コンフィグファイルcheck.selectDestinationChunkSizeの値を取得する。コンフィグの指定は必須
 	@return 設定された移行先の読み込みチャンク数 **/
 	public static int getCheckSelectDestinationChunkSize() {return Integer.parseInt(getResourceString("check.selectDestinationChunkSize", "", Level.FATAL));}
+	/** コンフィグファイルcheck.selectTimeoutの値を取得する。デフォルトは30秒
+	@return 設定されたバッチ更新サイズ **/
+	public static int getCheckSelectTimeout() {return Integer.parseInt(getResourceString("check.selectTimeout", "30", Level.INFO));}
 
 	/** 処理数取得SQLを指定した場合は処理数文字列が入る **/
 	protected String cnt = null;
@@ -181,7 +184,8 @@ public abstract class DataChecker extends Utilities implements Runnable {
 
 		if(sql!=null && !sql.equals("")){
 			try(Statement stmt = scon.createStatement()){
-				outLog(log_, Level.INFO, "チェック件数取得ステートメント取得完了");
+			outLog(log_, Level.INFO, "チェック件数取得ステートメント取得完了。タイムアウト：" + getCheckSelectTimeout() + "秒");
+			stmt.setQueryTimeout(getCheckSelectTimeout());
 				// SQL 実行
 				try(ResultSet rs = stmt.executeQuery(sql)){
 					// 結果を出力
@@ -238,7 +242,8 @@ public abstract class DataChecker extends Utilities implements Runnable {
 		}
 
 		try(Statement sstmt = scon.createStatement()){
-			outLog(log_, Level.INFO, "チェック元ステートメント取得完了");
+			outLog(log_, Level.INFO, "チェック元ステートメント取得完了。タイムアウト：" + getCheckSelectTimeout() + "秒");
+			sstmt.setQueryTimeout(getCheckSelectTimeout());
 			sstmt.setFetchSize(getCheckSelectSourceChunkSize());
 			try(PreparedStatement dps = dcon.prepareStatement(dexecsql)){
 				outLog(log_, Level.INFO, "比較対象ステートメント取得完了");

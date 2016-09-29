@@ -28,6 +28,9 @@ public abstract class Migrator extends Utilities implements Runnable {
 	/** コンフィグファイルexec.batchChunkSizeの値を取得する。コンフィグの指定は必須
 	@return 設定されたバッチ更新サイズ **/
 	public static int getExecBatchChunkSize() {return Integer.parseInt(getResourceString("exec.batchChunkSize", "", Level.FATAL));}
+	/** コンフィグファイルexec.selectTimeoutの値を取得する。デフォルトは30秒
+	@return 設定されたバッチ更新サイズ **/
+	public static int getExecSelectTimeout() {return Integer.parseInt(getResourceString("exec.selectTimeout", "30", Level.INFO));}
 
 	/** バッチinsertを実行する単位 **/
 	protected int batchSize = getExecBatchChunkSize();
@@ -245,7 +248,8 @@ public abstract class Migrator extends Utilities implements Runnable {
 
 		if(sql!=null && !sql.equals("")){
 			try(Statement stmt = con.createStatement()){
-				outLog(log_, Level.INFO, "件数取得ステートメント取得完了");
+				outLog(log_, Level.INFO, "件数取得ステートメント取得完了。タイムアウト：" + getExecSelectTimeout() + "秒");
+				stmt.setQueryTimeout(getExecSelectTimeout());
 				// SQL 実行
 				try(ResultSet rs = stmt.executeQuery(sql)){
 					// 結果を出力
@@ -289,7 +293,8 @@ public abstract class Migrator extends Utilities implements Runnable {
 
 		Connection con_insert_to = null;
 		try(Statement stmt = con.createStatement()){
-			outLog(log_, Level.INFO, "移行元ステートメント取得完了");
+			outLog(log_, Level.INFO, "移行元ステートメント取得完了。タイムアウト：" + getExecSelectTimeout() + "秒");
+			stmt.setQueryTimeout(getExecSelectTimeout());
 			stmt.setFetchSize(getExecSelectChunkSize());
 			// SQL 実行
 			try(ResultSet rs = stmt.executeQuery(execsql)){
