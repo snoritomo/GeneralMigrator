@@ -130,8 +130,9 @@ public abstract class Migrator extends Utilities implements Runnable {
 	 * @param rs 今回のループで取得したデータ (NotNull)
 	 * @param con 移行先のコネクション (NotNull)
 	 * @throws SQLException DBエラーや更新障害時にthrowされる。発生後は行ロールバック後、次の処理へ
+	 * @throws IllegalParameterToBeContinuedException 問題のあるデータだった場合に処理をスキップしたい時、実装者がthrowする
 	 */
-	protected abstract void doOtherProcess(ResultSet rs, Connection con) throws SQLException;
+	protected abstract void doOtherProcess(ResultSet rs, Connection con) throws SQLException, IllegalParameterToBeContinuedException;
 	
 	/**
 	 * 処理数取得SQLを返すように実装すると、処理数がロギングされる。
@@ -190,8 +191,9 @@ public abstract class Migrator extends Utilities implements Runnable {
 	 * @param rs 今回のループで取得したデータ (NotNull)
 	 * @param ps 現在準備されたinsertステートメント
 	 * @throws SQLException DBエラー
+	 * @throws IllegalParameterToBeContinuedException 問題のあるデータだった場合に処理をスキップしたい時、実装者がthrowする
 	 */
-	protected void doInsert(ResultSet rs, PreparedStatement ps) throws SQLException{
+	protected void doInsert(ResultSet rs, PreparedStatement ps) throws SQLException, IllegalParameterToBeContinuedException{
 		try{
 			doOtherProcess(rs, getInsertTargetConnection());
 			if(batchSize>1){
